@@ -1,2 +1,4 @@
 telethon
 jdatetime
+sqlalchemy
+mysql-connector-python
