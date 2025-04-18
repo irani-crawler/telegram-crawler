@@ -2,3 +2,4 @@ telethon
 jdatetime
 sqlalchemy
 mysql-connector-python
+clickhouse_driver
