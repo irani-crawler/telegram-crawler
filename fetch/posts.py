@@ -1,9 +1,13 @@
-import re
-from datetime import datetime
+# fetch/posts.py
+import logging
 from telethon.errors import FloodWaitError
 from asyncio import sleep
+
 from db.models import Post
 from utils.db_helpers import commit_ignore_duplicates
+from utils.ch_logger import log_fetch_event
+
+logger = logging.getLogger(__name__)
 
 def parse_reactions(reactions):
     if not reactions or not hasattr(reactions, 'results'):
@@ -12,28 +16,32 @@ def parse_reactions(reactions):
         {
             'emoji': r.reaction.emoticon if hasattr(r.reaction, 'emoticon') else str(r.reaction),
             'count': r.count
-        } for r in reactions.results
+        }
+        for r in reactions.results
     ]
 
 async def get_filtered_posts(client, session, channel, keywords, start_date, end_date, shutdown_flag):
-    total = 0
-
+    """
+    Fetch messages matching keywords in a date range.
+    Save to SQL and log to ClickHouse.
+    """
+    matched = []
     for keyword in keywords:
-        print(f"🔍 Searching in {channel}: {keyword}")
+        logger.info(f"Searching '{keyword}' in {channel}")
         try:
             async for msg in client.iter_messages(channel, search=keyword):
                 if shutdown_flag:
-                    break
-                if not msg.message or not msg.date:
+                    return matched
+                if not msg.date or not msg.message:
                     continue
 
-                msg_date = msg.date.date()
-                if msg_date > end_date:
+                d = msg.date.date()
+                if d > end_date:
                     continue
-                if msg_date < start_date:
-                    print(f"🛑 Out of range: {msg.id}")
+                if d < start_date:
                     break
 
+                # Prepare and save Post
                 post = Post(
                     post_id=msg.id,
                     channel=channel,
@@ -42,13 +50,22 @@ async def get_filtered_posts(client, session, channel, keywords, start_date, end
                     text=msg.message,
                     reactions=parse_reactions(msg.reactions)
                 )
-                commit_ignore_duplicates(session, post)
-                total += 1
-                print(f"✅ Saved post {msg.id}")
+                try:
+                    commit_ignore_duplicates(session, post)
+                    matched.append(msg.id)
+                    log_fetch_event("POST_SAVED", channel, f"post_id={msg.id}")
+                    logger.info(f"Saved post {msg.id}")
+                except Exception as e:
+                    log_fetch_event("POST_SAVE_ERROR", channel, f"post_id={msg.id}, error={e}")
+                    logger.error(f"Failed to save post {msg.id}: {e}", exc_info=True)
+
                 await sleep(0.5)
 
         except FloodWaitError as e:
-            print(f"⏳ Flood wait: sleeping {e.seconds} sec...")
+            logger.warning(f"FloodWait fetching posts in {channel}: sleeping {e.seconds}s")
             await sleep(e.seconds + 1)
+        except Exception as ex:
+            log_fetch_event("POST_FETCH_ERROR", channel, f"keyword={keyword}, error={ex}")
+            logger.error(f"Error fetching posts for '{keyword}' in {channel}: {ex}", exc_info=True)
 
-    print(f"📦 Total collected for {channel}: {total}")
+    return matched
