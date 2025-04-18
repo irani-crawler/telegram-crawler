@@ -78,24 +78,29 @@ telegram-crawler/
       Example:
       ```json
       {
-        "channels": [
-          "https://t.me/example_channel1",
-          "https://t.me/example_channel2"
-        ]
-      }
+          "channels": [
+              "https://t.me/mypersia24",
+              "https://t.me/SaberinFa",
+              "https://t.me/isna94",
+              "https://t.me/bbcpersian",
+              "https://t.me/khabarevijh",
+              "https://t.me/ageofreform",
+              "https://t.me/thezoomit"
+          ]
+        }
+  
       ```
 
     - **keywords.json:** Contains a JSON object with a `"keywords"` array of keywords to search for.
       
       Example:
       ```json
-      {
-        "keywords": [
-          "keyword1",
-          "keyword2",
-          "keyword3"
-        ]
-      }
+        {
+            "keywords": [
+                "تست"
+            ]
+        }
+          
       ```
 
 5. **Initialize the Database**
@@ -117,6 +122,77 @@ telegram-crawler/
 
 ---
 
+## Database Configuration
+
+### MySQL Setup
+
+1. Install MySQL on your system if not already installed.
+
+    ```bash
+    sudo apt update
+    sudo apt install mysql-server
+    ```
+
+2. Log in to the MySQL server and create a database for the crawler:
+
+    ```bash
+    mysql -u root -p
+    CREATE DATABASE telegram_db;
+    CREATE USER 'reza'@'localhost' IDENTIFIED BY '1234';
+    GRANT ALL PRIVILEGES ON telegram_db.* TO 'reza'@'localhost';
+    FLUSH PRIVILEGES;
+    EXIT;
+    ```
+
+3. Update the `DB_URL` in `db/db.py` to match your MySQL configuration:
+
+    ```python
+    DB_URL = "mysql+pymysql://reza:1234@localhost/telegram_db"
+    ```
+
+### ClickHouse Setup
+
+1. Install ClickHouse on your system if not already installed:
+
+    ```bash
+    sudo apt update
+    sudo apt install clickhouse-server clickhouse-client
+    ```
+
+2. Start the ClickHouse server:
+
+    ```bash
+    sudo service clickhouse-server start
+    ```
+
+3. Log in to the ClickHouse client and create a database for logging:
+
+    ```bash
+    clickhouse-client
+    CREATE DATABASE crawler_logs_db;
+    USE crawler_logs_db;
+    CREATE TABLE telegram_fetch_logs (
+        timestamp DateTime,
+        event String,
+        channel String,
+        details String
+    ) ENGINE = MergeTree()
+    ORDER BY timestamp;
+    EXIT;
+    ```
+
+4. Update the ClickHouse configuration in `utils/ch_logger.py`:
+
+    ```python
+    CH_HOST = "localhost"
+    CH_PORT = 9000
+    CH_DATABASE = "crawler_logs_db"
+    CH_USER = "default"
+    CH_PASSWORD = ""
+    ```
+
+---
+
 ## Usage
 
 Run the crawler from the command line with your desired parameters. For example:
@@ -132,6 +208,31 @@ This command will:
 - Search and filter messages by the specified keywords and date range.
 - Save post data (with reactions) to the database.
 - Handle graceful shutdown on `CTRL+C`.
+
+---
+
+## Command-Line Arguments
+
+The `main.py` script accepts the following arguments:
+
+- `--start`: Start date in Jalali format (YYYY-MM-DD). **Required**.
+- `--end`: End date in Jalali format (YYYY-MM-DD). **Required**.
+- `--channels`: Path to the JSON file containing the list of channels. Default: `input/channels.json`.
+- `--keywords`: Path to the JSON file containing the list of keywords. Default: `input/keywords.json`.
+- `--limit`: Maximum number of comments to fetch per post. Default: `10`.
+
+### Example Usage
+
+```bash
+python main.py --start 1402-01-01 --end 1402-12-29 --channels input/channels.json --keywords input/keywords.json --limit 10
+```
+
+This command will:
+
+- Crawl posts from the specified channels.
+- Filter posts by the given keywords and date range.
+- Fetch up to 10 comments per post.
+- Save the data to the MySQL database and log events to ClickHouse.
 
 ---
 
