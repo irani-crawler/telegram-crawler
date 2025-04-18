@@ -13,6 +13,9 @@ A resilient and modular Telegram crawler that retrieves channel posts, reactions
 - **State Persistence:** Saves progress (last processed message) to resume crawling after interruptions.
 - **Rate-Limit Handling:** Gracefully manages Telegram's `FloodWaitError`.
 - **Structured Storage:** Organizes posts and comments in separate JSON files.
+- **Database Integration:** Stores posts and comments in a MySQL database.
+- **ClickHouse Logging:** Logs events and errors to a ClickHouse database for monitoring.
+- **View Data:** Includes a script to view stored posts and comments.
 - **Modular Codebase:** Clean and easily extensible design for further development.
 
 ---
@@ -23,22 +26,23 @@ A resilient and modular Telegram crawler that retrieves channel posts, reactions
 telegram-crawler/
 ├── main.py                   # Main entry point with CLI support
 ├── config.py                 # API credentials and default channel configuration
-├── channels.json             # JSON file with list of channel URLs
-├── keywords.json             # JSON file with list of keywords to filter posts
+├── view_data.py              # Script to view stored posts and comments
+├── requirements.txt          # Python dependencies
+├── input/
+│   ├── channels.json         # JSON file with list of channel URLs
+│   └── keywords.json         # JSON file with list of keywords to filter posts
 ├── fetch/
 │   ├── posts.py              # Module for crawling posts and filtering them by keywords/date
 │   └── comments.py           # Module for fetching threaded comments on posts
 ├── utils/
-│   ├── file_manager.py       # Functions for saving/loading JSON data and crawler state
-│   └── date_converter.py     # Utility to convert Jalali dates to Gregorian
+│   ├── ch_logger.py          # ClickHouse logging utility
+│   ├── date_converter.py     # Utility to convert Jalali dates to Gregorian
+│   └── db_helpers.py         # Helper functions for database operations
 ├── db/
-│   ├── db.py                 # Database connection & initialization (if using DB output)
+│   ├── db.py                 # Database connection & initialization
 │   └── models.py             # SQLAlchemy models (posts and comments)
-├── data/
-│   ├── posts/                # Directory for saved post JSON files (one per post)
-│   └── comments/             # Directory for saved comment JSON files (one per post)
 ├── session/                  # Directory for Telethon session files (auto-generated)
-└── state.json                # File that stores the crawler's progress state
+└── README.md                 # Project documentation
 ```
 
 ---
@@ -56,12 +60,6 @@ telegram-crawler/
 
     ```bash
     pip install -r requirements.txt
-    ```
-
-    If the `requirements.txt` file is missing, install:
-    
-    ```bash
-    pip install telethon jdatetime sqlalchemy mysql-connector-python
     ```
 
 3. **Configure API Credentials**
@@ -100,13 +98,21 @@ telegram-crawler/
       }
       ```
 
-5. **Initialize the Database (Optional)**
+5. **Initialize the Database**
 
-    If you want to save data to a MySQL database, update the database configuration in `db/db.py` and run:
+    Update the database configuration in `db/db.py` and run:
 
     ```python
     from db.db import init_db
     init_db()
+    ```
+
+6. **View Stored Data**
+
+    Use `view_data.py` to view stored posts and comments:
+
+    ```bash
+    python view_data.py
     ```
 
 ---
@@ -116,7 +122,7 @@ telegram-crawler/
 Run the crawler from the command line with your desired parameters. For example:
 
 ```bash
-python main.py --start 1402-01-01 --end 1402-12-29 --channels channels.json --keywords keywords.json --limit 10
+python main.py --start 1402-01-01 --end 1402-12-29 --channels input/channels.json --keywords input/keywords.json --limit 10
 ```
 
 This command will:
@@ -124,14 +130,14 @@ This command will:
 - Convert the Jalali dates to Gregorian.
 - Load channels and keywords from the provided JSON files.
 - Search and filter messages by the specified keywords and date range.
-- Save post data (with reactions) to `data/posts/` and comments to `data/comments/`.
+- Save post data (with reactions) to the database.
 - Handle graceful shutdown on `CTRL+C`.
 
 ---
 
 ## Output Formats
 
-### Post (data/posts/{post_id}.json)
+### Post (Database Record)
 
 ```json
 {
@@ -146,7 +152,7 @@ This command will:
 }
 ```
 
-### Comments (data/comments/{post_id}.json)
+### Comments (Database Record)
 
 ```json
 [
@@ -167,7 +173,7 @@ This command will:
 
 - Press `CTRL+C` while the script is running.
 - The crawler will finish the current operation and then exit.
-- Progress is saved in `state.json` for resuming later.
+- Progress is saved in the database for resuming later.
 
 ---
 
@@ -180,5 +186,3 @@ This project is licensed under the MIT License. Feel free to use, modify, or con
 ## Contributing
 
 Contributions, bug reports, and feature requests are welcome! Please open an issue or submit a pull request for major changes.
-
-```
