@@ -2,7 +2,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 from db.models import Base
 
-DB_URL = "mysql+pymysql://reza:1234@localhost/telegram_db"
+DB_URL = "mysql+pymysql://reza:1234@localhost/tel_test2"
 
 
 engine = create_engine(DB_URL)
