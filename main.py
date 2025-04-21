@@ -2,9 +2,9 @@ import argparse
 import asyncio
 import signal
 import json
-
 from telethon import TelegramClient
-
+from telethon.sessions import StringSession
+import socks
 from config import api_id, api_hash
 from utils.date_converter import jalali_to_gregorian
 from utils.ch_logger import log_fetch_event
@@ -13,6 +13,13 @@ from fetch.comments import get_comments
 from db.db import SessionLocal, init_db
 
 shutdown_flag = False
+
+# Proxy settings
+PROXY_HOST = '68.71.249.158'
+PROXY_PORT = 4145
+PROXY_TYPE = socks.SOCKS5  # Change to SOCKS4 if needed
+PROXY_USERNAME = ''  # Optional: Set the username if the proxy requires it
+PROXY_PASSWORD = ''  # Optional: Set the password if the proxy requires it
 
 def ask_exit(signame):
     global shutdown_flag
@@ -41,9 +48,17 @@ async def run(start_jalali, end_jalali, channels_file, keywords_file, comment_li
     init_db()
     session = SessionLocal()
 
-    async with TelegramClient('session/session', api_id, api_hash) as client:
+    # Initialize TelegramClient without requiring frequent logins
+    client = TelegramClient(
+        'session/telegram',  # Use a persistent session file
+        api_id,
+        api_hash,
+        # proxy=(PROXY_TYPE, PROXY_HOST, PROXY_PORT, True, PROXY_USERNAME, PROXY_PASSWORD)
+    )
+
+    async with client:
         loop = asyncio.get_running_loop()
-        for sig in ('SIGINT','SIGTERM'):
+        for sig in ('SIGINT', 'SIGTERM'):
             loop.add_signal_handler(getattr(signal, sig), lambda s=sig: ask_exit(s))
 
         for channel in channels:
