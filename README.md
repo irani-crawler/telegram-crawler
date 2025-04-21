@@ -1,22 +1,22 @@
 # Telegram Crawler
 
-A resilient and modular Telegram crawler that retrieves channel posts, reactions, and threaded comments based on keyword and date-range filters. This crawler is designed to handle rate limits, save progress, and resume from the last processed state after interruptions.
+یک crawler مقاوم و ماژولار برای تلگرام که پست‌های کانال، واکنش‌ها و نظرات زنجیره‌ای را بر اساس فیلترهای کلیدواژه و بازه‌ی زمانی بازیابی می‌کند. این crawler برای مدیریت محدودیت‌های نرخ (rate limits)، ذخیره‌ی پیشرفت و ادامه از آخرین وضعیت پس از وقفه‌ها طراحی شده است.
 
 ---
 
-## Features
+## ویژگی‌ها
 
-- **Keyword-Based Search:** Searches public channels for posts matching given keywords.
-- **Date Filtering:** Filters posts within a specified Jalali (Shamsi) date range (converted to Gregorian).
-- **Comment Fetching:** Retrieves threaded comments (when a discussion group is linked).
-- **Reactions Extraction:** Extracts emojis and counts from post reactions.
-- **State Persistence:** Saves progress (last processed message) to resume crawling after interruptions.
-- **Rate-Limit Handling:** Gracefully manages Telegram's `FloodWaitError`.
-- **Structured Storage:** Organizes posts and comments in separate JSON files.
-- **Database Integration:** Stores posts and comments in a MySQL database.
-- **ClickHouse Logging:** Logs events and errors to a ClickHouse database for monitoring.
-- **View Data:** Includes a script to view stored posts and comments.
-- **Modular Codebase:** Clean and easily extensible design for further development.
+- **Keyword-Based Search:** جستجو در کانال‌های عمومی برای پست‌هایی که با کلیدواژه‌های مشخص مطابقت دارند.
+- **Date Filtering:** فیلتر کردن پست‌ها در بازه‌ی زمانی تعیین‌شده (Jalali/Shamsi) و تبدیل آن به تاریخ‌های Gregorian.
+- **Comment Fetching:** بازیابی نظرات زنجیره‌ای (اگر گروه بحث مرتبط باشد).
+- **Reactions Extraction:** استخراج ایموجی‌ها و شمارش واکنش‌ها به پست.
+- **State Persistence:** ذخیره‌ی پیشرفت (آخرین پیام پردازش شده) برای ادامه‌ی عملیات پس از وقفه.
+- **Rate-Limit Handling:** مدیریت خطای FloodWaitError تلگرام به‌صورت gracefull.
+- **Structured Storage:** سازمان‌دهی پست‌ها و نظرات در فایل‌های JSON جداگانه.
+- **Database Integration:** ذخیره‌ی پست‌ها و نظرات در پایگاه‌داده MySQL.
+- **ClickHouse Logging:** ثبت رویدادها و خطاها در ClickHouse برای مانیتورینگ.
+- **View Data:** شامل اسکریپتی برای مشاهده‌ی پست‌ها و نظرات ذخیره‌شده.
+- **Modular Codebase:** معماری تمیز و قابل توسعه برای اضافه کردن قابلیت‌های جدید.
 
 ---
 
@@ -47,7 +47,7 @@ telegram-crawler/
 
 ---
 
-## Setup Instructions
+## دستورالعمل راه‌اندازی
 
 1. **Clone the Repository**
 
@@ -64,7 +64,7 @@ telegram-crawler/
 
 3. **Configure API Credentials**
 
-    Edit `config.py` with your Telegram API credentials:
+    در فایل `config.py` شناسه و هش API تلگرام خود را وارد کنید:
 
     ```python
     api_id = 123456              # Your API ID from my.telegram.org
@@ -73,39 +73,12 @@ telegram-crawler/
 
 4. **Prepare Input Files**
 
-    - **channels.json:** Contains a JSON object with a `"channels"` array of public channel URLs.
-      
-      Example:
-      ```json
-      {
-          "channels": [
-              "https://t.me/mypersia24",
-              "https://t.me/SaberinFa",
-              "https://t.me/isna94",
-              "https://t.me/bbcpersian",
-              "https://t.me/khabarevijh",
-              "https://t.me/ageofreform",
-              "https://t.me/thezoomit"
-          ]
-        }
-  
-      ```
-
-    - **keywords.json:** Contains a JSON object with a `"keywords"` array of keywords to search for.
-      
-      Example:
-      ```json
-        {
-            "keywords": [
-                "تست"
-            ]
-        }
-          
-      ```
+    - **channels.json:** شامل آرایه‌ای از URL‌های کانال‌های عمومی.
+    - **keywords.json:** شامل آرایه‌ای از کلیدواژه‌ها برای فیلتر کردن پست‌ها.
 
 5. **Initialize the Database**
 
-    Update the database configuration in `db/db.py` and run:
+    تنظیمات پایگاه‌داده را در `db/db.py` به‌روز کنید و سپس:
 
     ```python
     from db.db import init_db
@@ -114,7 +87,7 @@ telegram-crawler/
 
 6. **View Stored Data**
 
-    Use `view_data.py` to view stored posts and comments:
+    برای مشاهده‌ی پست‌ها و نظرات ذخیره‌شده از `view_data.py` استفاده کنید:
 
     ```bash
     python view_data.py
@@ -126,14 +99,14 @@ telegram-crawler/
 
 ### MySQL Setup
 
-1. Install MySQL on your system if not already installed.
+1. نصب MySQL:
 
     ```bash
     sudo apt update
     sudo apt install mysql-server
     ```
 
-2. Log in to the MySQL server and create a database for the crawler:
+2. ورود به MySQL و ایجاد پایگاه‌داده:
 
     ```bash
     mysql -u root -p
@@ -144,7 +117,7 @@ telegram-crawler/
     EXIT;
     ```
 
-3. Update the `DB_URL` in `db/db.py` to match your MySQL configuration:
+3. به‌روز کردن `DB_URL` در `db/db.py`:
 
     ```python
     DB_URL = "mysql+pymysql://reza:1234@localhost/telegram_db"
@@ -152,20 +125,20 @@ telegram-crawler/
 
 ### ClickHouse Setup
 
-1. Install ClickHouse on your system if not already installed:
+1. نصب ClickHouse:
 
     ```bash
     sudo apt update
     sudo apt install clickhouse-server clickhouse-client
     ```
 
-2. Start the ClickHouse server:
+2. راه‌اندازی سرویس ClickHouse:
 
     ```bash
     sudo service clickhouse-server start
     ```
 
-3. Log in to the ClickHouse client and create a database for logging:
+3. ایجاد پایگاه‌داده برای لاگ‌ها در ClickHouse:
 
     ```bash
     clickhouse-client
@@ -181,7 +154,7 @@ telegram-crawler/
     EXIT;
     ```
 
-4. Update the ClickHouse configuration in `utils/ch_logger.py`:
+4. به‌روز کردن تنظیمات ClickHouse در `utils/ch_logger.py`:
 
     ```python
     CH_HOST = "localhost"
@@ -195,44 +168,34 @@ telegram-crawler/
 
 ## Usage
 
-Run the crawler from the command line with your desired parameters. For example:
-
 ```bash
 python main.py --start 1402-01-01 --end 1402-12-29 --channels input/channels.json --keywords input/keywords.json --limit 10
 ```
 
-This command will:
+این دستور:
 
-- Convert the Jalali dates to Gregorian.
-- Load channels and keywords from the provided JSON files.
-- Search and filter messages by the specified keywords and date range.
-- Save post data (with reactions) to the database.
-- Handle graceful shutdown on `CTRL+C`.
+- تاریخ‌های Jalali را به Gregorian تبدیل می‌کند.
+- کانال‌ها و کلیدواژه‌ها را از فایل‌های JSON بارگذاری می‌کند.
+- پیام‌ها را با توجه به کلیدواژه و بازه‌ی زمانی فیلتر می‌کند.
+- داده‌ها را در MySQL ذخیره و رویدادها را در ClickHouse لاگ می‌کند.
 
 ---
 
-## Command-Line Arguments
+## آرگومان‌های خط فرمان
 
-The `main.py` script accepts the following arguments:
+- `--start`: تاریخ شروع به فرمت Jalali (YYYY-MM-DD). **الزامی**.
+- `--end`: تاریخ پایان به فرمت Jalali (YYYY-MM-DD). **الزامی**.
+- `--channels`: مسیر فایل JSON حاوی لیست کانال‌ها. پیش‌فرض: `input/channels.json`.
+- `--keywords`: مسیر فایل JSON حاوی کلیدواژه‌ها. پیش‌فرض: `input/keywords.json`.
+- `--limit`: حداکثر تعداد نظرات برای هر پست. پیش‌فرض: `10`.
 
-- `--start`: Start date in Jalali format (YYYY-MM-DD). **Required**.
-- `--end`: End date in Jalali format (YYYY-MM-DD). **Required**.
-- `--channels`: Path to the JSON file containing the list of channels. Default: `input/channels.json`.
-- `--keywords`: Path to the JSON file containing the list of keywords. Default: `input/keywords.json`.
-- `--limit`: Maximum number of comments to fetch per post. Default: `10`.
+---
 
-### Example Usage
+## Example Usage
 
 ```bash
 python main.py --start 1402-01-01 --end 1402-12-29 --channels input/channels.json --keywords input/keywords.json --limit 10
 ```
-
-This command will:
-
-- Crawl posts from the specified channels.
-- Filter posts by the given keywords and date range.
-- Fetch up to 10 comments per post.
-- Save the data to the MySQL database and log events to ClickHouse.
 
 ---
 
@@ -272,18 +235,19 @@ This command will:
 
 ## Graceful Shutdown
 
-- Press `CTRL+C` while the script is running.
-- The crawler will finish the current operation and then exit.
-- Progress is saved in the database for resuming later.
+- برای متوقف کردن عملیات دکمه `CTRL+C` را فشار دهید.
+- crawler عملیات جاری را تکمیل کرده و سپس خارج می‌شود.
+- پیشرفت در پایگاه‌داده ذخیره می‌شود تا بعداً بتوانید ادامه دهید.
 
 ---
 
 ## License
 
-This project is licensed under the MIT License. Feel free to use, modify, or contribute to the project.
+این پروژه تحت مجوز MIT منتشر شده است. برای استفاده، اصلاح یا مشارکت آزاد هستید.
 
 ---
 
 ## Contributing
 
-Contributions, bug reports, and feature requests are welcome! Please open an issue or submit a pull request for major changes.
+اشکال‌زدایی و درخواست ویژگی خوش‌آمدید! لطفاً issue باز کنید یا pull request ارسال نمایید.
+
